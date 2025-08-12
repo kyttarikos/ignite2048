@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>2048 — Ignite ICT Club (Mapua MCM)</title>
+
+<!-- Montserrat font-face blocks (as provided) -->
+<style>
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://fonts.gstatic.com/s/montserrat/v30/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw0aXpsog.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://fonts.gstatic.com/s/montserrat/v30/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw9aXpsog.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://fonts.gstatic.com/s/montserrat/v30/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw2aXpsog.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://fonts.gstatic.com/s/montserrat/v30/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw3aXpsog.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://fonts.gstatic.com/s/montserrat/v30/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw5aXo.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+</style>
+
+<style>
+:root{
+  --mapua-navy: #0f2451;
+  --mapua-bright-red: #eb1f28;
+  --mapua-medium-blue: #114aa1;
+  --mapua-light-gray: #b0b0b1; /* requested light gray background */
+  --mapua-dark-gray: #747575;
+
+  --ignite-red: #952623;
+  --ignite-very-dark-blue: #142450;
+
+  --panel-alpha: rgba(255,255,255,0.03);
+  --tile-text-dark: #12000a;
+  --duration-moves: 160ms;
+
+  /* code wall tuning */
+  --code-opacity: 0.18;      /* darker so readable on light bg */
+  --code-speed: 60s;        /* scroll speed (seconds per loop) */
+  --code-min-size: 28px;     /* min font size */
+  --code-max-size: 50px;    /* max font size (way bigger than screen) */
+}
+
+/* Page background set to light gray */
+html,body{
+  height:100%;
+  margin:0;
+  background: var(--mapua-light-gray);
+  font-family: 'Montserrat', "Helvetica Neue", Arial, sans-serif;
+  color: #111;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  overflow:hidden;
+}
+
+/* ===== Scrolling code wall (background) =====
+   Track contains two duplicated blocks stacked vertically.
+   The code text is centered and scales with viewport using clamp so
+   it becomes WAY larger than the viewport on large screens.
+*/
+.bg-code {
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* widen the track (so very large text can overflow left/right) and make it tall for vertical loop */
+.code-track {
+  width:220%;             /* intentionally wide so huge text can overflow */
+  height:200%;
+  transform: translateY(-50%); /* start mid-loop so it moves smoothly down */
+  animation: codeDown var(--code-speed) linear infinite;
+  will-change: transform;
+  display:block;
+}
+
+/* center the content in each half of the track */
+.code-block{
+  height:50%;
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  padding: 0; /* we center the actual inner pre */
+}
+
+/* the pre is centered and made very large responsively */
+.code-block pre{
+  margin:0;
+  display:inline-block;
+  text-align:center;            /* center lines */
+  font-family: "Courier New", Courier, monospace;
+  /* scale text with viewport: min = var(--code-min-size), ideal = 8vw + 4vh, max = var(--code-max-size) */
+  font-size: clamp(var(--code-min-size), 8vw + 4vh, var(--code-max-size));
+  line-height: 0.95;            /* slightly tighter to fit more lines */
+  color: rgba(10,10,10,var(--code-opacity)); /* darker text to read on light bg */
+  white-space: pre-wrap;
+  pointer-events:none;
+  user-select:none;
+  transform-origin:center center;
+  /* prevent the pre from wrapping to the next line awkwardly when huge:
+     allow long lines to overflow horizontally which is hidden by parent */
+  max-width: 200%;
+  word-break: normal;
+  word-wrap: normal;
+}
+
+/* keep the slow vertical loop */
+@keyframes codeDown {
+  from { transform: translateY(-50%); }
+  to   { transform: translateY(0%); }
+}
+
+/* subtle vignette to give the game panel contrast on top of light bg */
+.bg-overlay {
+  position:fixed; inset:0; z-index:1; pointer-events:none;
+  background: linear-gradient(180deg, rgba(0,0,0,0.06), rgba(0,0,0,0.12));
+}
+
+/* ===== Game container & header ===== */
+.container {
+  width:560px;
+  max-width:96vw;
+  z-index:3;
+  position:relative;
+}
+
+/* header with logos */
+.header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+}
+.brand-left, .brand-right { display:flex; align-items:center; gap:8px; }
+.brand-left img, .brand-right img { height:44px; width:auto; display:block; object-fit:contain; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.08)); }
+
+/* title and sub */
+.title {
+  font-family: 'Montserrat', sans-serif;
+  color: var(--ignite-red);
+  font-size:30px;
+  margin:0;
+  letter-spacing:0.2px;
+}
+.sub {
+  color: var(--mapua-dark-gray);
+  font-size:12px;
+  opacity:0.95;
+  margin-top:2px;
+}
+
+/* control buttons and score */
+.controls { display:flex; gap:8px; align-items:center; }
+.button {
+  background:transparent;
+  border:1px solid rgba(0,0,0,0.08);
+  color:#111;
+  padding:8px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:13px;
+}
+.score {
+  background: rgba(255,255,255,0.7);
+  padding:8px 12px;
+  border-radius:8px;
+  border:1px solid rgba(0,0,0,0.06);
+  text-align:center;
+  min-width:84px;
+  color:#111;
+}
+
+/* panel where the game sits (slightly translucent to show code behind) */
+.panel {
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.92));
+  padding:18px;
+  border-radius:12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+  position:relative;
+}
+
+/* grid and cells */
+.grid {
+  width:100%;
+  aspect-ratio:1/1;
+  background: rgba(0,0,0,0.02);
+  border-radius:8px;
+  padding:12px;
+  box-sizing:border-box;
+  position:relative;
+  overflow:hidden;
+}
+.cells {
+  position:absolute;
+  inset:12px;
+  display:grid;
+  grid-template-columns: repeat(4,1fr);
+  grid-template-rows: repeat(4,1fr);
+  gap:12px;
+  z-index:0;
+}
+.cell { background: rgba(0,0,0,0.02); border-radius:8px; }
+
+/* tiles layer */
+.tiles { position:absolute; inset:12px; z-index:6; pointer-events:none; }
+.tile {
+  position:absolute;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  color:#fff;
+  box-sizing:border-box;
+  padding:6px;
+  text-align:center;
+  transition: transform var(--duration-moves) cubic-bezier(.2,.9,.2,1), left var(--duration-moves), top var(--duration-moves);
+  will-change: transform,left,top;
+  user-select:none;
+  border:1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  font-family: 'Montserrat', sans-serif; /* numbers use Montserrat */
+  font-size:36px;
+  line-height:1;
+}
+
+/* smaller sizes for bigger numbers */
+.tile.v16 { font-size:32px; }
+.tile.v32 { font-size:30px; }
+.tile.v64 { font-size:28px; }
+.tile.v128 { font-size:26px; }
+.tile.v256 { font-size:24px; }
+.tile.v512 { font-size:22px; }
+.tile.v1024{ font-size:20px; }
+.tile.v2048{ font-size:18px; }
+
+/* spawn & merge animations */
+.tile.new { animation: pop 180ms ease; }
+@keyframes pop{ 0%{ transform: scale(0.2); } 60%{ transform: scale(1.08);} 100%{ transform: scale(1);} }
+.tile.merged { animation: pulse 220ms ease; }
+@keyframes pulse{ 0%{ transform: scale(1);} 50%{ transform: scale(1.12);} 100%{ transform: scale(1);} }
+
+/* ===== Tile coloring follows the Mapua/Ignite theme ===== */
+.tile.v2   { background: #0f2451; color: #fff; }  /* navy */
+.tile.v4   { background: #142450; color: #fff; }  /* very dark blue */
+.tile.v8   { background: #0f3a7a; color: #fff; }  /* deeper medium */
+.tile.v16  { background: #114aa1; color: #fff; }  /* medium blue */
+.tile.v32  { background: #2b66c1; color: #fff; }
+.tile.v64  { background: #4a84e3; color: #fff; }
+
+/* Ignite/Mapua red progression (dark -> bright) */
+.tile.v128 { background: #591919; color: #fff; }  /* dark red */
+.tile.v256 { background: #7b1f23; color: #fff; }
+.tile.v512 { background: #952623; color: #fff; }  /* ignite red (medium dark) */
+.tile.v1024{ background: #c22a2a; color: #fff; }
+.tile.v2048{ background: #eb1f28; color: #fff; }  /* mapua bright red */
+
+/* overlays and message */
+.overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(0,0,0,0.06), rgba(0,0,0,0.08)); z-index:12; border-radius:12px; color:#111; font-size:28px; text-align:center; padding:22px; }
+.hidden { display:none; }
+.small { font-size:14px; opacity:0.95; margin-top:8px; }
+
+/* footer note */
+.note { margin-top:12px; text-align:center; font-size:13px; color:var(--mapua-dark-gray); }
+.credit { margin-top:6px; font-family: 'Montserrat', sans-serif; color:var(--mapua-bright-red); font-size:13px; }
+
+/* responsive: adjust code sizing/padding on small displays */
+@media (max-width:520px){
+  .brand-left img, .brand-right img { height:36px; }
+  .code-block pre { font-size: clamp(18px, 10vw, 120px); }
+  .title { font-size:24px; }
+  .container { width:92vw; }
+}
+</style>
+</head>
+<body>
+
+<!-- Background code wall -->
+<div class="bg-code" aria-hidden="true">
+  <div class="code-track" aria-hidden="true">
+    <div class="code-block" aria-hidden="true">
+      <pre>
+function greet(name) {
+  return `Hello, ${name}! Welcome to Ignite ICT Club.`;
+}
+
+const members = [
+  { name: "Ana", role: "web" },
+  { name: "Ben", role: "ai"  },
+  { name: "Chris", role: "sys" },
+  { name: "Dana", role: "devops" }
+];
+
+for (let i = 0; i < members.length; i++) {
+  console.log(greet(members[i].name));
+}
+
+const sum = (...nums) => nums.reduce((a,b) => a + b, 0);
+
+async function fetchData(url) {
+  try {
+    const resp = await fetch(url);
+    return await resp.json();
+  } catch (err) {
+    console.error("fetch error:", err);
+    return null;
+  }
+}
+
+class Queue {
+  constructor(){ this.data = []; }
+  enqueue(x){ this.data.push(x); }
+  dequeue(){ return this.data.shift(); }
+}
+
+
+      </pre>
+    </div>
+<br><br><br><br><br><br><br><br>
+    <div class="code-block" aria-hidden="true">
+      <pre>
+function greet(name) {
+  return `Hello, ${name}! Welcome to Ignite ICT Club.`;
+}
+
+const members = [
+  { name: "Riza", role: "pres" },
+  { name: "Christian", role: "vpres"  },
+  { name: "Isaac", role: "comms" },
+  { name: "Ellie", role: "ictrep" }
+];
+
+for (let i = 0; i < members.length; i++) {
+  console.log(greet(members[i].name));
+}
+
+const sum = (...nums) => nums.reduce((a,b) => a + b, 0);
+
+async function fetchData(url) {
+  try {
+    const resp = await fetch(url);
+    return await resp.json();
+  } catch (err) {
+    console.error("fetch error:", err);
+    return null;
+  }
+}
+
+class Queue {
+  constructor(){ this.data = []; }
+  enqueue(x){ this.data.push(x); }
+  dequeue(){ return this.data.shift(); }
+}
+
+
+      </pre>
+    </div>
+  </div>
+</div>
+
+<!-- soft overlay over code to improve contrast -->
+<div class="bg-overlay" aria-hidden="true"></div>
+
+<!-- Game container -->
+<div class="container" role="application" aria-label="2048 Ignite — Mapua MCM">
+
+  <div class="header" style="z-index:4;">
+    <div class="brand-left">
+      <img src="https://i.ibb.co/sdcDzTKf/image.png" alt="Mapua logo" />
+      <div>
+        <h1 class="title">IGNITE 2048</h1>
+        <div class="sub">Ignite ICT Club — Mapua MCM</div>
+      </div>
+    </div>
+
+    <div class="brand-right" style="justify-content:flex-end;">
+      <div style="text-align:right; margin-right:8px;">
+        <div class="sub" style="font-size:11px; color:var(--mapua-dark-gray);">Made for</div>
+        <div class="sub" style="font-size:13px; color:var(--mapua-bright-red);">IGNITE</div>
+      </div>
+      <img src="https://i.ibb.co/rf01nXcS/IGNITE-SOCIETY-hd-transparent.png" alt="Ignite logo" />
+    </div>
+  </div>
+
+  <div class="panel" style="z-index:5;">
+    <div class="header" style="margin-bottom:12px; align-items:center;">
+      <div style="display:flex; gap:10px; align-items:center;">
+        <div class="score" aria-live="polite">Score<br><strong id="score">0</strong></div>
+        <button class="button" id="newGameBtn" aria-label="New Game">New Game</button>
+      </div>
+      <div style="flex:1"></div>
+      <div class="controls" style="align-items:center;">
+        <div style="font-size:12px; color:var(--mapua-dark-gray);">Controls: arrows / WASD / swipe</div>
+      </div>
+    </div>
+
+    <div class="grid" id="grid" tabindex="0" aria-hidden="false">
+      <div class="cells" id="cells"></div>
+      <div class="tiles" id="tiles" aria-hidden="false"></div>
+
+      <div class="overlay hidden" id="gameOverOverlay">Game Over<br><div class="small">Press New Game to try again</div></div>
+      <div class="overlay hidden" id="winOverlay">You Win!<br><div class="small">Keep going or start new game</div></div>
+    </div>
+
+    <div class="note" style="color:var(--mapua-dark-gray);">
+      Ignite ICT Club — Mapua Malayan Colleges Mindanao
+      <div class="credit">Coded with ❤ by Ignite ICT Club.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Game logic (standard 2048 behavior) ===== -->
+<script>
+/* 2048 implementation with smooth animations, keyboard + WASD + swipe.
+   (Game code left intact; only UI/background changed.)
+*/
+
+const SIZE = 4;
+const gridEl = document.getElementById('grid');
+const cellsEl = document.getElementById('cells');
+const tilesEl = document.getElementById('tiles');
+const scoreEl = document.getElementById('score');
+const newBtn = document.getElementById('newGameBtn');
+const gameOverOverlay = document.getElementById('gameOverOverlay');
+const winOverlay = document.getElementById('winOverlay');
+
+let board = [];
+let score = 0;
+let tileIdCounter = 1;
+let tileMap = {}; // id -> {el,r,c,v}
+let animating = false;
+
+/* Build background cells */
+function buildCells(){
+  cellsEl.innerHTML = '';
+  for(let i=0;i<SIZE*SIZE;i++){
+    const d = document.createElement('div');
+    d.className = 'cell';
+    cellsEl.appendChild(d);
+  }
+}
+buildCells();
+
+/* Helpers */
+function emptyBoard(){ board = Array.from({length:SIZE}, ()=> Array(SIZE).fill(0)); }
+function cloneBoard(b){ return b.map(r=>r.slice()); }
+function randInt(n){ return Math.floor(Math.random()*n); }
+
+/* rotations */
+function rotateLeft(b){ const n=SIZE; const nb=Array.from({length:n}, ()=> Array(n).fill(0)); for(let r=0;r<n;r++) for(let c=0;c<n;c++) nb[n-1-c][r] = b[r][c]; return nb; }
+function rotateRight(b){ const n=SIZE; const nb=Array.from({length:n}, ()=> Array(n).fill(0)); for(let r=0;r<n;r++) for(let c=0;c<n;c++) nb[c][n-1-r] = b[r][c]; return nb; }
+function rotate180(b){ const n=SIZE; const nb=Array.from({length:n}, ()=> Array(n).fill(0)); for(let r=0;r<n;r++) for(let c=0;c<n;c++) nb[n-1-r][n-1-c] = b[r][c]; return nb; }
+function rotatedToOriginal(rr, rc, rotation){ const n=SIZE; if(rotation==='none') return {r:rr,c:rc}; if(rotation==='left') return {r: rc, c: n-1-rr}; if(rotation==='right') return {r: n-1-rc, c: rr}; if(rotation==='180') return {r: n-1-rr, c: n-1-rc}; }
+
+/* move logic (left-detailed) */
+function moveLeftDetailed(b){
+  const n=SIZE;
+  let moved=false, gained=0;
+  const newBoard = Array.from({length:n}, ()=> Array(n).fill(0));
+  const mappings = [];
+  for(let r=0;r<n;r++){
+    const sources = [];
+    for(let c=0;c<n;c++) if(b[r][c]!==0) sources.push({v:b[r][c], r, c});
+    if(sources.length===0) continue;
+    const out = [];
+    let i=0;
+    while(i < sources.length){
+      if(i+1 < sources.length && sources[i].v === sources[i+1].v){
+        const newV = sources[i].v * 2;
+        out.push({v:newV, mergedFrom:[sources[i], sources[i+1]]});
+        gained += newV;
+        i += 2;
+      } else {
+        out.push({v: sources[i].v, mergedFrom:[sources[i]]});
+        i += 1;
+      }
+    }
+    for(let c=0;c<out.length;c++){
+      newBoard[r][c] = out[c].v;
+      for(const src of out[c].mergedFrom){
+        mappings.push({fromR:src.r, fromC:src.c, toR:r, toC:c, merged: out[c].mergedFrom.length>1, newValue: out[c].v});
+      }
+    }
+    for(let c=0;c<n;c++) if(newBoard[r][c] !== b[r][c]) moved=true;
+  }
+  return {moved, board:newBoard, gained, mappings};
+}
+
+/* move in any direction */
+function move(dir){
+  let rotated, rotation;
+  if(dir==='left'){ rotated = cloneBoard(board); rotation='none'; }
+  else if(dir==='right'){ rotated = rotate180(board); rotation='180'; }
+  else if(dir==='up'){ rotated = rotateLeft(board); rotation='left'; }
+  else if(dir==='down'){ rotated = rotateRight(board); rotation='right'; }
+  else return {moved:false};
+  const res = moveLeftDetailed(rotated);
+  if(!res.moved) return {moved:false};
+  let final;
+  if(rotation==='none') final=res.board;
+  else if(rotation==='180') final=rotate180(res.board);
+  else if(rotation==='left') final=rotateRight(res.board);
+  else final=rotateLeft(res.board);
+  const mapped = res.mappings.map(m=>{
+    const s = rotatedToOriginal(m.fromR,m.fromC,rotation);
+    const d = rotatedToOriginal(m.toR,m.toC,rotation);
+    return {fromR:s.r, fromC:s.c, toR:d.r, toC:d.c, merged:m.merged, newValue:m.newValue};
+  });
+  return {moved:true, board:final, gained:res.gained, mappings:mapped};
+}
+
+/* DOM helpers for tile layout */
+function cellRect(r,c){
+  const rect = cellsEl.getBoundingClientRect();
+  const cellW = rect.width / SIZE;
+  const cellH = rect.height / SIZE;
+  return {left: c*cellW, top: r*cellH, w:cellW, h:cellH};
+}
+
+function createTileDOM(value, r, c, opts={}) {
+  const el = document.createElement('div');
+  const id = 'tile' + (tileIdCounter++);
+  el.className = 'tile v' + value + (opts.new? ' new':'');
+  el.dataset.id = id;
+  el.dataset.value = value;
+  el.textContent = value;
+  tilesEl.appendChild(el);
+  tileMap[id] = {el, r, c, v:value};
+  const pos = cellRect(r,c);
+  el.style.width = pos.w + 'px';
+  el.style.height = pos.h + 'px';
+  el.style.lineHeight = (pos.h - 12) + 'px';
+  el.style.left = pos.left + 'px';
+  el.style.top = pos.top + 'px';
+  return id;
+}
+function clearTiles(){ tilesEl.innerHTML = ''; tileMap = {}; tileIdCounter = 1; }
+function renderBoardInitial(){ clearTiles(); for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) if(board[r][c]) createTileDOM(board[r][c], r, c, {new:false}); }
+
+function spawnRandomTile(pop=true){
+  const empties=[];
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) if(board[r][c]===0) empties.push({r,c});
+  if(!empties.length) return null;
+  const pick = empties[randInt(empties.length)];
+  const val = Math.random() < 0.9 ? 2 : 4;
+  board[pick.r][pick.c] = val;
+  const id = createTileDOM(val, pick.r, pick.c, {new: pop});
+  return id;
+}
+
+function layoutAllTiles(){
+  const rect = cellsEl.getBoundingClientRect();
+  const cellW = rect.width / SIZE, cellH = rect.height / SIZE;
+  for(const id in tileMap){
+    const t = tileMap[id];
+    if(!t || !t.el) continue;
+    t.el.style.width = cellW + 'px';
+    t.el.style.height = cellH + 'px';
+    t.el.style.lineHeight = (cellH - 12) + 'px';
+    const pos = cellRect(t.r,t.c);
+    t.el.style.left = pos.left + 'px';
+    t.el.style.top = pos.top + 'px';
+  }
+}
+
+/* animate move: slide, then handle merges/spawn */
+async function animateMoveUsingMappings(mappings, finalBoard){
+  animating = true;
+  // ensure all source tiles exist as DOM mapped by their original coords
+  const coordToIds = {};
+  for(const id in tileMap){ const t = tileMap[id]; coordToIds[`${t.r},${t.c}`] = id; }
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) if(board[r][c] && !coordToIds[`${r},${c}`]) {
+    const id = createTileDOM(board[r][c], r, c, {new:false});
+    coordToIds[`${r},${c}`] = id;
+  }
+
+  // build dest -> [srcs]
+  const destMap = {};
+  for(const m of mappings){
+    const fromKey = `${m.fromR},${m.fromC}`;
+    const srcId = coordToIds[fromKey];
+    if(!srcId) continue;
+    const destKey = `${m.toR},${m.toC}`;
+    if(!destMap[destKey]) destMap[destKey] = [];
+    destMap[destKey].push({id: srcId, newValue: m.newValue, merged: m.merged});
+    // update tileMap coords to destination to trigger move on layout
+    tileMap[srcId].r = m.toR; tileMap[srcId].c = m.toC;
+  }
+
+  layoutAllTiles();
+  await new Promise(r=>setTimeout(r, 200)); // wait for slide
+
+  // handle merges
+  for(const destKey in destMap){
+    const list = destMap[destKey];
+    if(list.length > 1){
+      const [rStr, cStr] = destKey.split(','); const r = parseInt(rStr), c = parseInt(cStr);
+      for(const s of list){ if(tileMap[s.id] && tileMap[s.id].el){ tileMap[s.id].el.remove(); delete tileMap[s.id]; } }
+      const id = createTileDOM(finalBoard[r][c], r, c, {new:false});
+      tileMap[id].el.classList.add('merged');
+      setTimeout(()=>{ tileMap[id] && tileMap[id].el.classList.remove('merged'); }, 260);
+    }
+  }
+
+  // single sources: ensure value/class match final board
+  for(const destKey in destMap){
+    const list = destMap[destKey];
+    if(list.length === 1){
+      const s = list[0]; const t = tileMap[s.id];
+      if(t){
+        const parts = destKey.split(','); const r = parseInt(parts[0]), c = parseInt(parts[1]);
+        const finalVal = finalBoard[r][c];
+        if(t.v !== finalVal){
+          t.v = finalVal; t.el.dataset.value = finalVal; t.el.className = 'tile v' + finalVal;
+          t.el.classList.add('merged');
+          setTimeout(()=>{ t.el && t.el.classList.remove('merged'); }, 260);
+        } else {
+          t.el.className = 'tile v' + t.v;
+        }
+        t.r = r; t.c = c;
+      }
+    }
+  }
+
+  // remove any remaining tiles not present in final board
+  for(const id in tileMap){
+    const t = tileMap[id];
+    const v = finalBoard[t.r] && finalBoard[t.r][t.c] ? finalBoard[t.r][t.c] : 0;
+    if(v === 0){ t.el.remove(); delete tileMap[id]; }
+  }
+
+  layoutAllTiles();
+  animating = false;
+}
+
+/* attempt a move and handle spawn/score/win/gameover */
+async function tryMove(dir){
+  if(animating) return;
+  const res = move(dir);
+  if(!res.moved) return;
+  const finalBoard = res.board;
+  if(Object.keys(tileMap).length === 0) renderBoardInitial();
+  await animateMoveUsingMappings(res.mappings, finalBoard);
+  board = finalBoard;
+  score += res.gained; scoreEl.textContent = score;
+  spawnRandomTile(true);
+  if(board.some(r=>r.some(v=>v>=2048))){
+    winOverlay.classList.remove('hidden'); setTimeout(()=>winOverlay.classList.add('hidden'), 1400);
+  }
+  if(!canMove(board)) gameOverOverlay.classList.remove('hidden');
+}
+
+/* canMove check */
+function canMove(b){
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+    if(b[r][c]===0) return true;
+    if(c+1<SIZE && b[r][c]===b[r][c+1]) return true;
+    if(r+1<SIZE && b[r][c]===b[r+1][c]) return true;
+  }
+  return false;
+}
+
+/* inputs: keyboard + WASD + swipe */
+const keyMap = {'ArrowLeft':'left','ArrowRight':'right','ArrowUp':'up','ArrowDown':'down','a':'left','A':'left','d':'right','D':'right','w':'up','W':'up','s':'down','S':'down'};
+document.addEventListener('keydown',(e)=>{ if(keyMap[e.key]){ e.preventDefault(); tryMove(keyMap[e.key]); } });
+
+let touchStartX=0,touchStartY=0;
+gridEl.addEventListener('touchstart',(e)=>{ if(e.touches.length>1) return; touchStartX=e.touches[0].clientX; touchStartY=e.touches[0].clientY; },{passive:true});
+gridEl.addEventListener('touchend',(e)=>{ if(!touchStartX && !touchStartY) return; const dx=e.changedTouches[0].clientX-touchStartX; const dy=e.changedTouches[0].clientY-touchStartY; const absX=Math.abs(dx), absY=Math.abs(dy); const threshold=20; if(Math.max(absX,absY)<threshold){ touchStartX=touchStartY=0; return; } if(absX>absY) tryMove(dx>0?'right':'left'); else tryMove(dy>0?'down':'up'); touchStartX=touchStartY=0; });
+
+/* new game */
+function newGame(){
+  emptyBoard();
+  clearTiles();
+  score = 0;
+  scoreEl.textContent = score;
+  gameOverOverlay.classList.add('hidden');
+  winOverlay.classList.add('hidden');
+  spawnRandomTile(true);
+  spawnRandomTile(true);
+  layoutAllTiles();
+}
+newBtn.addEventListener('click', newGame);
+
+/* resize handler */
+window.addEventListener('resize', ()=> layoutAllTiles());
+
+/* start */
+emptyBoard();
+spawnRandomTile(true);
+spawnRandomTile(true);
+layoutAllTiles();
+</script>
+</body>
+</html>
+
