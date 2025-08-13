@@ -606,11 +606,12 @@ document.getElementById('cancelName').addEventListener('click', hideNameModal);
 function validateName(n){
   if(!n) return 'Name required';
   // Accept either only letters (A-Z, case-insensitive) OR only digits, 1-8 chars.
-  if(n.length > 8) {
-    return '8 characters only.';
+  if(!/^(?:[A-Za-z]{1,8}|[0-9]{1,8})$/.test(n)) {
+    return 'Use only letters OR only numbers (1–8 chars)';
   }
   return '';
 }
+
 
 document.getElementById('submitName').addEventListener('click', ()=>{
   const name = (playerNameInput.value || '').trim();
