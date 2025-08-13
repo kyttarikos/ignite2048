@@ -879,7 +879,26 @@ function canMove(b){
 
 /* inputs: keyboard + WASD + swipe */
 const keyMap = {'ArrowLeft':'left','ArrowRight':'right','ArrowUp':'up','ArrowDown':'down','a':'left','A':'left','d':'right','D':'right','w':'up','W':'up','s':'down','S':'down'};
-document.addEventListener('keydown',(e)=>{ if(keyMap[e.key]){ e.preventDefault(); tryMove(keyMap[e.key]); } });
+document.addEventListener('keydown', (e) => {
+  try {
+    const active = document.activeElement;
+    const tag = active && active.tagName && active.tagName.toUpperCase();
+
+    // if the user is focused on an input, textarea, or a contenteditable, do not handle moves
+    const isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || (active && active.isContentEditable);
+    if (isTyping) return; // allow text input normally
+
+    // normal game key handling
+    const k = e.key;
+    if (keyMap[k]) {
+      e.preventDefault();
+      tryMove(keyMap[k]);
+    }
+  } catch (err) {
+    // fail safe: don't break UI if something unexpected happens
+    console.error('keydown handler error', err);
+  }
+});
 
 let touchStartX=0,touchStartY=0;
 gridEl.addEventListener('touchstart',(e)=>{ if(e.touches.length>1) return; touchStartX=e.touches[0].clientX; touchStartY=e.touches[0].clientY; },{passive:true});
