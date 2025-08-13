@@ -54,7 +54,7 @@
   --mapua-navy: #0f2451;
   --mapua-bright-red: #eb1f28;
   --mapua-medium-blue: #114aa1;
-  --mapua-light-gray: #b0b0b1; /* requested light gray background */
+  --mapua-light-gray: #b0b0b1; /* light gray background */
   --mapua-dark-gray: #747575;
 
   --ignite-red: #952623;
@@ -65,10 +65,10 @@
   --duration-moves: 160ms;
 
   /* code wall tuning */
-  --code-opacity: 0.18;      /* darker so readable on light bg */
-  --code-speed: 60s;        /* scroll speed (seconds per loop) */
-  --code-min-size: 28px;     /* min font size */
-  --code-max-size: 50px;    /* max font size (way bigger than screen) */
+  --code-opacity: 0.18;
+  --code-speed: 60s;
+  --code-min-size: 28px;
+  --code-max-size: 50px;
 }
 
 /* Page background set to light gray */
@@ -87,11 +87,7 @@ html,body{
   overflow:hidden;
 }
 
-/* ===== Scrolling code wall (background) =====
-   Track contains two duplicated blocks stacked vertically.
-   The code text is centered and scales with viewport using clamp so
-   it becomes WAY larger than the viewport on large screens.
-*/
+/* ===== Scrolling code wall (background) ===== */
 .bg-code {
   position:fixed;
   inset:0;
@@ -102,18 +98,14 @@ html,body{
   align-items:center;
   justify-content:center;
 }
-
-/* widen the track (so very large text can overflow left/right) and make it tall for vertical loop */
 .code-track {
-  width:220%;             /* intentionally wide so huge text can overflow */
+  width:220%;
   height:200%;
-  transform: translateY(-50%); /* start mid-loop so it moves smoothly down */
+  transform: translateY(-50%);
   animation: codeDown var(--code-speed) linear infinite;
   will-change: transform;
   display:block;
 }
-
-/* center the content in each half of the track */
 .code-block{
   height:50%;
   box-sizing:border-box;
@@ -121,31 +113,24 @@ html,body{
   align-items:center;
   justify-content:center;
   overflow:hidden;
-  padding: 0; /* we center the actual inner pre */
+  padding: 0;
 }
-
-/* the pre is centered and made very large responsively */
 .code-block pre{
   margin:0;
   display:inline-block;
-  text-align:center;            /* center lines */
+  text-align:center;
   font-family: "Courier New", Courier, monospace;
-  /* scale text with viewport: min = var(--code-min-size), ideal = 8vw + 4vh, max = var(--code-max-size) */
   font-size: clamp(var(--code-min-size), 8vw + 4vh, var(--code-max-size));
-  line-height: 0.95;            /* slightly tighter to fit more lines */
-  color: rgba(10,10,10,var(--code-opacity)); /* darker text to read on light bg */
+  line-height: 0.95;
+  color: rgba(10,10,10,var(--code-opacity));
   white-space: pre-wrap;
   pointer-events:none;
   user-select:none;
   transform-origin:center center;
-  /* prevent the pre from wrapping to the next line awkwardly when huge:
-     allow long lines to overflow horizontally which is hidden by parent */
   max-width: 200%;
   word-break: normal;
   word-wrap: normal;
 }
-
-/* keep the slow vertical loop */
 @keyframes codeDown {
   from { transform: translateY(-50%); }
   to   { transform: translateY(0%); }
@@ -210,6 +195,16 @@ html,body{
   text-align:center;
   min-width:84px;
   color:#111;
+}
+.best {
+  background: rgba(255,255,255,0.85);
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid rgba(0,0,0,0.06);
+  text-align:center;
+  min-width:160px;
+  color:#111;
+  font-size:13px;
 }
 
 /* panel where the game sits (slightly translucent to show code behind) */
@@ -282,25 +277,57 @@ html,body{
 .tile.merged { animation: pulse 220ms ease; }
 @keyframes pulse{ 0%{ transform: scale(1);} 50%{ transform: scale(1.12);} 100%{ transform: scale(1);} }
 
-/* ===== Tile coloring follows the Mapua/Ignite theme ===== */
-.tile.v2   { background: #0f2451; color: #fff; }  /* navy */
-.tile.v4   { background: #142450; color: #fff; }  /* very dark blue */
-.tile.v8   { background: #0f3a7a; color: #fff; }  /* deeper medium */
-.tile.v16  { background: #114aa1; color: #fff; }  /* medium blue */
+/* tile colors */
+.tile.v2   { background: #0f2451; color: #fff; }
+.tile.v4   { background: #142450; color: #fff; }
+.tile.v8   { background: #0f3a7a; color: #fff; }
+.tile.v16  { background: #114aa1; color: #fff; }
 .tile.v32  { background: #2b66c1; color: #fff; }
 .tile.v64  { background: #4a84e3; color: #fff; }
-
-/* Ignite/Mapua red progression (dark -> bright) */
-.tile.v128 { background: #591919; color: #fff; }  /* dark red */
+.tile.v128 { background: #591919; color: #fff; }
 .tile.v256 { background: #7b1f23; color: #fff; }
-.tile.v512 { background: #952623; color: #fff; }  /* ignite red (medium dark) */
+.tile.v512 { background: #952623; color: #fff; }
 .tile.v1024{ background: #c22a2a; color: #fff; }
-.tile.v2048{ background: #eb1f28; color: #fff; }  /* mapua bright red */
+.tile.v2048{ background: #eb1f28; color: #fff; }
 
 /* overlays and message */
 .overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(0,0,0,0.06), rgba(0,0,0,0.08)); z-index:12; border-radius:12px; color:#111; font-size:28px; text-align:center; padding:22px; }
 .hidden { display:none; }
 .small { font-size:14px; opacity:0.95; margin-top:8px; }
+
+/* Leaderboard - modal view */
+.lb-modal-backdrop {
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,0.45);
+  z-index:40;
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+.lb-modal {
+  background: rgba(255,255,255,0.98);
+  border-radius:12px;
+  min-width:320px;
+  max-width:90vw;
+  max-height:86vh;
+  overflow:auto;
+  padding:16px;
+  box-shadow: 0 16px 60px rgba(0,0,0,0.28);
+}
+.lb-modal h2 { margin:0 0 8px 0; font-size:18px; color:#111; }
+.lb-table { width:100%; border-collapse:collapse; font-size:14px; color:#111; }
+.lb-table th, .lb-table td { padding:8px 10px; border-bottom:1px solid rgba(0,0,0,0.06); text-align:left; }
+.lb-close { margin-top:12px; display:flex; justify-content:flex-end; gap:8px; }
+
+/* Name input modal (when top 10) */
+.name-modal-backdrop {
+  position:fixed; inset:0; background: rgba(0,0,0,0.45); z-index:42; display:none; align-items:center; justify-content:center;
+}
+.name-modal { background:#fff; padding:14px; border-radius:10px; min-width:260px; max-width:94vw; box-shadow:0 12px 40px rgba(0,0,0,0.25); }
+.name-modal label{ display:block; margin-bottom:8px; font-weight:600; color:#111; }
+.name-modal input{ width:100%; padding:8px; border-radius:8px; border:1px solid #ddd; box-sizing:border-box; font-size:16px; margin-bottom:8px; }
+.name-modal .row{ display:flex; gap:8px; justify-content:flex-end; }
 
 /* footer note */
 .note { margin-top:12px; text-align:center; font-size:13px; color:var(--mapua-dark-gray); }
@@ -325,76 +352,16 @@ html,body{
 function greet(name) {
   return `Hello, ${name}! Welcome to Ignite ICT Club.`;
 }
-
-const members = [
-  { name: "Ana", role: "web" },
-  { name: "Ben", role: "ai"  },
-  { name: "Chris", role: "sys" },
-  { name: "Dana", role: "devops" }
-];
-
-for (let i = 0; i < members.length; i++) {
-  console.log(greet(members[i].name));
-}
-
-const sum = (...nums) => nums.reduce((a,b) => a + b, 0);
-
-async function fetchData(url) {
-  try {
-    const resp = await fetch(url);
-    return await resp.json();
-  } catch (err) {
-    console.error("fetch error:", err);
-    return null;
-  }
-}
-
-class Queue {
-  constructor(){ this.data = []; }
-  enqueue(x){ this.data.push(x); }
-  dequeue(){ return this.data.shift(); }
-}
-
-
+...
       </pre>
     </div>
-<br><br><br><br><br><br><br><br>
+
     <div class="code-block" aria-hidden="true">
       <pre>
 function greet(name) {
   return `Hello, ${name}! Welcome to Ignite ICT Club.`;
 }
-
-const members = [
-  { name: "Riza", role: "pres" },
-  { name: "Christian", role: "vpres"  },
-  { name: "Isaac", role: "comms" },
-  { name: "Ellie", role: "ictrep" }
-];
-
-for (let i = 0; i < members.length; i++) {
-  console.log(greet(members[i].name));
-}
-
-const sum = (...nums) => nums.reduce((a,b) => a + b, 0);
-
-async function fetchData(url) {
-  try {
-    const resp = await fetch(url);
-    return await resp.json();
-  } catch (err) {
-    console.error("fetch error:", err);
-    return null;
-  }
-}
-
-class Queue {
-  constructor(){ this.data = []; }
-  enqueue(x){ this.data.push(x); }
-  dequeue(){ return this.data.shift(); }
-}
-
-
+...
       </pre>
     </div>
   </div>
@@ -428,6 +395,7 @@ class Queue {
     <div class="header" style="margin-bottom:12px; align-items:center;">
       <div style="display:flex; gap:10px; align-items:center;">
         <div class="score" aria-live="polite">Score<br><strong id="score">0</strong></div>
+        <div class="best" aria-live="polite">BEST<br><strong id="best">—</strong></div>
         <button class="button" id="newGameBtn" aria-label="New Game">New Game</button>
       </div>
       <div style="flex:1"></div>
@@ -444,6 +412,10 @@ class Queue {
       <div class="overlay hidden" id="winOverlay">You Win!<br><div class="small">Keep going or start new game</div></div>
     </div>
 
+    <div style="margin-top:12px; display:flex; gap:10px; align-items:center; justify-content:center;">
+      <button class="button" id="viewLBBtn">View Leaderboard</button>
+    </div>
+
     <div class="note" style="color:var(--mapua-dark-gray);">
       Ignite ICT Club — Mapua Malayan Colleges Mindanao
       <div class="credit">Coded with ❤ by Ignite ICT Club.</div>
@@ -451,11 +423,151 @@ class Queue {
   </div>
 </div>
 
-<!-- ===== Game logic (standard 2048 behavior) ===== -->
+<!-- Leaderboard Modal (centered popup) -->
+<div class="lb-modal-backdrop" id="lbModal" role="dialog" aria-hidden="true">
+  <div class="lb-modal" role="document" aria-labelledby="lbTitle">
+    <h2 id="lbTitle">Leaderboard — Top 10</h2>
+    <table class="lb-table" id="lbTable">
+      <thead>
+        <tr><th>#</th><th>Name</th><th>Score</th><th>Date</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="lb-close">
+      <button class="button" id="closeLB">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Name Input Modal (when player qualifies for Top 10) -->
+<div class="name-modal-backdrop" id="nameModal" aria-hidden="true" role="dialog">
+  <div class="name-modal" role="document">
+    <label for="playerName">You made the Top 10! Enter name (≤ 8):</label>
+    <input id="playerName" maxlength="8" placeholder="NAME" />
+    <div id="nameError" style="color:#b00020; min-height:18px; font-size:13px;"></div>
+    <div class="row" style="margin-top:10px;">
+      <button class="button" id="cancelName">Cancel</button>
+      <button class="button" id="submitName">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Game logic (standard 2048 behavior) + leaderboard handling ===== -->
 <script>
-/* 2048 implementation with smooth animations, keyboard + WASD + swipe.
-   (Game code left intact; only UI/background changed.)
-*/
+/* ------------------------
+   Leaderboard (localStorage)
+   ------------------------ */
+const LB_KEY = 'ignite2048_leaderboard_v1';
+
+function loadLeaderboard(){
+  try {
+    const raw = localStorage.getItem(LB_KEY);
+    if(!raw) return [];
+    const parsed = JSON.parse(raw);
+    if(!Array.isArray(parsed)) return [];
+    return parsed.sort((a,b)=> b.score - a.score);
+  } catch(e){
+    console.warn('LB load error', e);
+    return [];
+  }
+}
+function saveLeaderboard(arr){
+  const trimmed = arr.sort((a,b)=> b.score - a.score).slice(0,10);
+  localStorage.setItem(LB_KEY, JSON.stringify(trimmed));
+  renderLeaderboard();
+  updateBestDisplay();
+}
+function renderLeaderboard(){
+  const lb = loadLeaderboard();
+  const tbody = document.querySelector('#lbTable tbody');
+  tbody.innerHTML = '';
+  for(let i=0;i<10;i++){
+    const entry = lb[i];
+    const tr = document.createElement('tr');
+    const rank = document.createElement('td'); rank.textContent = i+1;
+    const name = document.createElement('td'); name.textContent = entry ? entry.name : '—';
+    const score = document.createElement('td'); score.textContent = entry ? entry.score : '—';
+    const date = document.createElement('td'); date.textContent = entry ? (new Date(entry.date)).toLocaleString() : '—';
+    tr.appendChild(rank); tr.appendChild(name); tr.appendChild(score); tr.appendChild(date);
+    tbody.appendChild(tr);
+  }
+}
+function qualifiesForTop10(score){
+  const lb = loadLeaderboard();
+  if(lb.length < 10) return true;
+  return score > lb[lb.length-1].score;
+}
+function addLeaderboardEntry(name, score){
+  const lb = loadLeaderboard();
+  lb.push({ name, score, date: (new Date()).toISOString() });
+  saveLeaderboard(lb);
+}
+function clearLeaderboard(){
+  localStorage.removeItem(LB_KEY);
+  renderLeaderboard();
+  updateBestDisplay();
+}
+function updateBestDisplay(){
+  const lb = loadLeaderboard();
+  const bestEl = document.getElementById('best');
+  if(lb.length && lb[0]) bestEl.textContent = `${lb[0].name} — ${lb[0].score}`;
+  else bestEl.textContent = '—';
+}
+
+/* UI: open/close leaderboard modal */
+const lbModal = document.getElementById('lbModal');
+document.getElementById('viewLBBtn').addEventListener('click', ()=>{
+  renderLeaderboard();
+  lbModal.style.display = 'flex';
+  lbModal.setAttribute('aria-hidden','false');
+});
+document.getElementById('closeLB').addEventListener('click', ()=>{
+  lbModal.style.display = 'none';
+  lbModal.setAttribute('aria-hidden','true');
+});
+
+/* Name input modal behavior */
+const nameModal = document.getElementById('nameModal');
+const playerNameInput = document.getElementById('playerName');
+const nameError = document.getElementById('nameError');
+let pendingScore = null;
+
+function showNameModal(score){
+  pendingScore = score;
+  playerNameInput.value = '';
+  nameError.textContent = '';
+  nameModal.style.display = 'flex';
+  nameModal.setAttribute('aria-hidden','false');
+  playerNameInput.focus();
+}
+function hideNameModal(){
+  nameModal.style.display = 'none';
+  nameModal.setAttribute('aria-hidden','true');
+  pendingScore = null;
+}
+document.getElementById('cancelName').addEventListener('click', hideNameModal);
+
+function validateName(n){
+  if(!n) return 'Name required';
+  // Accept either only letters (A-Z, case-insensitive) OR only digits, 1-8 chars.
+  if(n.length > 8) {
+    return '8 characters only.';
+  }
+  return '';
+}
+
+document.getElementById('submitName').addEventListener('click', ()=>{
+  const name = (playerNameInput.value || '').trim();
+  const err = validateName(name);
+  if(err){ nameError.textContent = err; return; }
+  addLeaderboardEntry(name, pendingScore || 0);
+  hideNameModal();
+  alert('Saved to leaderboard!');
+});
+
+/* ------------------------
+   2048 game code (unchanged logic)
+   ------------------------ */
 
 const SIZE = 4;
 const gridEl = document.getElementById('grid');
@@ -686,10 +798,17 @@ async function tryMove(dir){
   board = finalBoard;
   score += res.gained; scoreEl.textContent = score;
   spawnRandomTile(true);
+
   if(board.some(r=>r.some(v=>v>=2048))){
     winOverlay.classList.remove('hidden'); setTimeout(()=>winOverlay.classList.add('hidden'), 1400);
+    // check leaderboard if qualifies
+    if(qualifiesForTop10(score)) showNameModal(score);
   }
-  if(!canMove(board)) gameOverOverlay.classList.remove('hidden');
+  if(!canMove(board)){
+    gameOverOverlay.classList.remove('hidden');
+    // check leaderboard if qualifies
+    if(qualifiesForTop10(score)) showNameModal(score);
+  }
 }
 
 /* canMove check */
@@ -732,7 +851,10 @@ emptyBoard();
 spawnRandomTile(true);
 spawnRandomTile(true);
 layoutAllTiles();
+
+/* initial leaderboard render and best display */
+renderLeaderboard();
+updateBestDisplay();
 </script>
 </body>
 </html>
-
