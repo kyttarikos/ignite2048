@@ -352,7 +352,35 @@ html,body{
 function greet(name) {
   return `Hello, ${name}! Welcome to Ignite ICT Club.`;
 }
-...
+
+const members = [
+  { name: "Riza", role: "pres" },
+  { name: "Christian", role: "vpres"  },
+  { name: "Isaac", role: "comms" },
+  { name: "Ellie", role: "ictrep" }
+];
+
+for (let i = 0; i < members.length; i++) {
+  console.log(greet(members[i].name));
+}
+
+const sum = (...nums) => nums.reduce((a,b) => a + b, 0);
+
+async function fetchData(url) {
+  try {
+    const resp = await fetch(url);
+    return await resp.json();
+  } catch (err) {
+    console.error("fetch error:", err);
+    return null;
+  }
+}
+
+class Queue {
+  constructor(){ this.data = []; }
+  enqueue(x){ this.data.push(x); }
+  dequeue(){ return this.data.shift(); }
+}
       </pre>
     </div>
 
@@ -361,7 +389,35 @@ function greet(name) {
 function greet(name) {
   return `Hello, ${name}! Welcome to Ignite ICT Club.`;
 }
-...
+
+const members = [
+  { name: "Riza", role: "pres" },
+  { name: "Christian", role: "vpres"  },
+  { name: "Isaac", role: "comms" },
+  { name: "Ellie", role: "ictrep" }
+];
+
+for (let i = 0; i < members.length; i++) {
+  console.log(greet(members[i].name));
+}
+
+const sum = (...nums) => nums.reduce((a,b) => a + b, 0);
+
+async function fetchData(url) {
+  try {
+    const resp = await fetch(url);
+    return await resp.json();
+  } catch (err) {
+    console.error("fetch error:", err);
+    return null;
+  }
+}
+
+class Queue {
+  constructor(){ this.data = []; }
+  enqueue(x){ this.data.push(x); }
+  dequeue(){ return this.data.shift(); }
+}
       </pre>
     </div>
   </div>
